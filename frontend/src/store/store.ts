@@ -8,13 +8,17 @@ import type { PreloadedState } from "@reduxjs/toolkit";
 
 // Reducers
 import counterReducer from "../features/counter/counterSlice";
+import nodesReducer from "../features/nodes/nodesSlice";
 import { pokemonApi } from "../services/pokemon";
 import { postsApi } from "../services/posts";
+import { nodesApi } from '../services/nodes';
 
 const rootReducer = combineReducers({
   [postsApi.reducerPath]: postsApi.reducer,
   [pokemonApi.reducerPath]: pokemonApi.reducer,
+  [nodesApi.reducerPath]: pokemonApi.reducer,
   counter: counterReducer,
+  nodes: nodesReducer,
 });
 
 export const setupStore = (preloadedState?: PreloadedState<RootState>) => {
@@ -22,7 +26,7 @@ export const setupStore = (preloadedState?: PreloadedState<RootState>) => {
     reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
       // adding the api middleware enables caching, invalidation, polling and other features of `rtk-query`
-      getDefaultMiddleware().concat(postsApi.middleware, pokemonApi.middleware),
+      getDefaultMiddleware().concat(postsApi.middleware, pokemonApi.middleware, nodesApi.middleware),
     preloadedState,
   });
 };

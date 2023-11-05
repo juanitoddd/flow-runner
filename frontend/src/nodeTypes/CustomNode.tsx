@@ -1,12 +1,7 @@
 import { memo } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 
-const CustomNode = ({
-  data,
-  isConnectable,
-  targetPosition = Position.Top,
-  sourcePosition = Position.Bottom
-}: NodeProps) => {
+const CustomNode = ({ data, isConnectable, targetPosition = Position.Top, sourcePosition = Position.Bottom }: NodeProps) => {
   return (
     <>
       <Handle
@@ -14,6 +9,10 @@ const CustomNode = ({
         position={targetPosition}
         isConnectable={isConnectable}
       />
+      <div>
+        <label htmlFor="text">Text:</label>
+        <input id="text" name="text" className="nodrag" />
+      </div>
       {data?.label}
       <Handle
         type="source"

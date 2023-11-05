@@ -2,7 +2,6 @@
   "name": "23° Flow API",
   "version": "0.2.4",
   "scripts": {
-    "prepare": "husky install",
     "dev": "tsx watch src",
     "build": "rimraf build && tsx esbuild.ts",
     "start": "npm run build && node build",
@@ -13,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "5.6.0",
+    "@fastify/cors": "^8.4.1",
     "@fastify/mongodb": "^6.2.0",
     "@fastify/sensible": "5.2.0",
     "@fastify/swagger": "8.2.1",
@@ -25,6 +25,7 @@
     "dotenv": "^16.0.3",
     "fastify": "4.20.0",
     "fastify-plugin": "4.4.0",
+    "fastify-sse-v2": "^3.1.2",
     "lodash": "^4.17.21",
     "python-shell": "^5.0.0",
     "uuid": "^9.0.0"
@@ -40,7 +41,6 @@
     "eslint": "8.29.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-prettier": "4.2.1",
-    "husky": "8.0.2",
     "jsdom": "^20.0.3",
     "json-schema-to-ts": "2.6.2",
     "lint-staged": "13.1.0",

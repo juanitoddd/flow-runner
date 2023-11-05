@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { PythonShell } from 'python-shell'
 import path from 'path'
+import fs from 'fs/promises'
+
 
 //joining path of directory
 const directoryPath = path.join(process.cwd(), '../nodes')
@@ -8,46 +10,84 @@ const directoryPath = path.join(process.cwd(), '../nodes')
 const options = {
   mode: 'text' as 'text',
   pythonOptions: ['-u'], // get print results in real-time
-  scriptPath: '/home/juan/dev/23dev_env/23flow/nodes'
+  scriptPath: '../nodes'
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 export default async (fastify: FastifyInstance) => {
-  // Add schema so they can be shared and referred
-  // routes definitions
-  fastify.get('/run:file', {}, async (req, res) => {
-    /*
-    const { file } = req.params
-    if (file) {
-        const output = await cp.exec(`cd ${directoryPath} && python ${file}`)
-        console.log('🚀 ~ output:', output)
-        return { statusCode: 200, output: output[0] }
-    } 
-    */
-    return { statusCode: 200, output: '' }
+
+  fastify.get('/', {}, async function (req, res) {
+    const files = await fs.readdir(directoryPath);    
+    return { statusCode: 200, output: files }
   })
 
-  fastify.get('/debug', {}, async (req, res) => {
-    const shell = new PythonShell('debug.py', options)
-    shell.on('message', function (message) {
-      const wss = fastify.websocketServer
-      wss.on('connection', function connection(ws) {
-        ws.on('error', console.error)
-        ws.emit('message', message)
-        /*
-        ws.on('message', function message(data, isBinary) {
-          wss.clients.forEach(function each(client) {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-              client.send(data, { binary: isBinary })
-            }
-          })
-        })
-        */
-      })
-      console.log('wss', wss)
-      // fastify.websocketServer.emit('message', message)
-      console.log('results', message)
+  // event-strea,
+  fastify.get('/run/:file', {}, async (req, res) => {    
+    const { file } = req.params as any
+    if(!file) return { statusCode: 200, output: `No file was found with name ${file}` }
+    let i = 0;
+    res.code(200)
+    res.headers({
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }) 
+    const shell = new PythonShell(file, options)    
+    res.sse({ id: String(i), data: `Initializing ${file}`});        
+    shell.on('message', async function (message) {
+      console.log('message', message)
+      // res.raw.write(message)      
+      res.sse({id: String(i++), data: message});
     })
-    // await PythonShell.run('debug.py', options).then((messages) => {})
-    return { statusCode: 200, output: '' }
+    shell.on('stderr', async function (stderr) {
+      console.log('stderr', stderr)
+      res.sse({id: String(i++), data: 'error'});
+      res.sseContext.source.end()
+    });
+    shell.on('close', async function () {      
+      res.sse({id: String(i++), data: 'finished'});
+      res.sseContext.source.end()
+      return 
+    });    
   })
+
+  // event-stream
+  fastify.get("/debug", async function (req, res) {
+    res.code(200)
+    res.headers({
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }) 
+    const shell = new PythonShell('debug.py', options)    
+    res.sse({ id: '0', data: `Initializing debug.py`});        
+    shell.on('message', async function (message) {
+      console.log('message', message)
+      // res.raw.write(message)      
+      res.sse({ data: message});
+    })
+    shell.on('stderr', async function (stderr) {
+      console.log('stderr', stderr)
+      res.sse({ data: 'error'});
+      res.sseContext.source.end()
+    });
+    shell.on('close', async function () {      
+      res.sse({ data: 'finished'});
+      res.sseContext.source.end()
+      return 
+    });
+  });
+
+  // event-stream
+  fastify.get("/test", async function (req, res) {
+    for (let i = 0; i < 10; i++) {
+      await sleep(2000);
+      res.sse({id: String(i), data: "Some message"});
+    }
+  });    
 }
