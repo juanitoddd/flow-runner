@@ -9,10 +9,3 @@ body,
   font-family: sans-serif;
   text-align: center;
 }
-
-.react-flow__node-custom {
-  padding: 10px;
-  background-color: #556677;
-  color: white;
-  border-radius: 4px;
-}

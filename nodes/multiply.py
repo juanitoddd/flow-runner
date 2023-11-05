@@ -1,6 +1,8 @@
 import time
-print("Multiply Script")
+print("Multiply Script begin")
 time.sleep(2)
 print("Multiplying ...")
 time.sleep(3)
-print("Result")
+print("Printing Result")
+time.sleep(3)
+print("Finishing")

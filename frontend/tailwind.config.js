@@ -7,6 +7,9 @@ export default {
   ],
   theme: {
     extend: {},
+    fontFamily: {
+      'display': ['Roboto Mono', 'Oswald'],
+    }
   },
   plugins: [require('flowbite/plugin')],
 };

@@ -24,33 +24,14 @@ const nodeTypes = {
   custom: CustomNode
 };
 
-const initialNodes: Node[] = [
-  {
-    id: "1",
-    type: "input",
-    data: { label: "Node 1" },
-    position: { x: 250, y: 5 }
-  },  
-  {
-    id: "4",
-    type: "python",
-    data: { label: "Python Node 2" },
-    position: { x: 400, y: 200 }
-  },
-  {
-    id: "5",
-    type: "python",
-    data: { label: "Python Node" },
-    position: { x: 100, y: 200 }
-  }
-];
+const initialNodes: Node[] = [];
 
 const initialEdges: Edge[] = [
   //{ id: "e1-2", source: "1", target: "2", animated: true },
   //{ id: "e1-3", source: "1", target: "3" }
 ];
 
-const BasicFlow = () => {    
+const BasicFlow = () => {        
   const pyNodes = useSelector((state: RootState) => state.nodes.nodes);  
   const [nodes, setNodes, onNodesChange] = useNodesState([]);  
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -59,22 +40,10 @@ const BasicFlow = () => {
     (params: Edge | Connection) => setEdges((els) => addEdge(params, els)),
     [setEdges]
   );  
-
+    
   useEffect(() => {
     setNodes(pyNodes)
-  }, [pyNodes]);
-  /*
-    {error ? (
-      <>Oh no, there was an error</>
-    ) : isLoading ? (
-      <>Loading...</>
-    ) : data ? (
-      <>
-        <h3>{data.species.name}</h3>
-        <img src={data.sprites.front_shiny} alt={data.species.name} />
-      </>
-    ) : null}
-  */
+  }, [pyNodes]);   
 
   return (
     <ReactFlow

@@ -38,7 +38,8 @@ export default async (fastify: FastifyInstance) => {
       'Connection': 'keep-alive'
     }) 
     const shell = new PythonShell(file, options)    
-    res.sse({ id: String(i), data: `Initializing ${file}`});        
+    // res.sse({ id: String(i), data: `Initializing ${file}`});
+    res.sse({ id: String(i), data: '__initializing__'});
     shell.on('message', async function (message) {
       console.log('message', message)
       // res.raw.write(message)      
@@ -50,7 +51,7 @@ export default async (fastify: FastifyInstance) => {
       res.sseContext.source.end()
     });
     shell.on('close', async function () {      
-      res.sse({id: String(i++), data: 'finished'});
+      res.sse({id: String(i++), data: '__finished__'});
       res.sseContext.source.end()
       return 
     });    
