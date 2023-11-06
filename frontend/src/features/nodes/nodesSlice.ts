@@ -4,7 +4,7 @@ import { Node, Edge } from "reactflow";
 import nodesApi, { NodeState } from "../../services/nodes";
 
 export interface NodesState {
-  selectedNode: string | null;
+  selectedNode: number | null;
   runningNode: number | null;
   nodes: Node[];
   edges: Edge[];
@@ -24,8 +24,12 @@ export const nodesSlice = createSlice({
   name: "nodes",
   initialState,
   reducers: {
+    selectNode: (state, action: PayloadAction<number | null>) => {
+      state.selectedNode = action.payload;
+    },
     runNode: (state, action: PayloadAction<number | null>) => {
       state.runningNode = action.payload;
+      state.selectedNode = action.payload; // Run & Select
     },
     resetNodeOuput: (state) => {
       if (state.runningNode !== null) {
@@ -111,6 +115,6 @@ export const runningNode = createAsyncThunk(
   }
 );
 
-export const { runNode } = nodesSlice.actions;
+export const { runNode, selectNode } = nodesSlice.actions;
 
 export default nodesSlice.reducer;

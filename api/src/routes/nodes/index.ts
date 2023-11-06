@@ -24,7 +24,7 @@ export default async (fastify: FastifyInstance) => {
     return { statusCode: 200, output: files }
   })
 
-  // event-strea,
+  // event-stream
   fastify.get('/run/:file', {}, async (req, res) => {
     const { file } = req.params as any
     if (!file)
@@ -42,7 +42,6 @@ export default async (fastify: FastifyInstance) => {
     res.sse({ id: String(i), data: '__initializing__' })
     shell.on('message', async function (message) {
       console.log('message', message)
-      // res.raw.write(message)
       res.sse({ id: String(i++), data: message })
     })
     shell.on('stderr', async function (stderr) {

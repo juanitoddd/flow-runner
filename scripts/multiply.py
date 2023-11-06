@@ -6,4 +6,3 @@ time.sleep(3)
 print("Printing Result")
 time.sleep(3)
 print("Finishing")
-something

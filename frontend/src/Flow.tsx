@@ -38,24 +38,23 @@ const BasicFlow = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((els) => addEdge(params, els)),
+    (params: Edge | Connection) => { 
+      console.log("🚀 ~ params:", params)  
+      return setEdges((els) => addEdge(params, els))
+    },
     [setEdges]
   );  
+  
     
-  useEffect(() => {
-    console.log("🚀 ~ useEffect triggered")
+  useEffect(() => {    
     setNodes(pyNodes)
-  }, [pyNodes.length]);
-
-  const onNodesChanges = (any: any) => {    
-    onNodesChange(any)
-  }
+  }, [pyNodes.length]);  
 
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChanges}
+      onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       nodeTypes={nodeTypes}

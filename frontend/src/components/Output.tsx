@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
 import { SpinnerCircularSplit, SpinnerInfinity } from 'spinners-react';
 import { Node } from "reactflow";
+import { classNames } from '../utils/css';
 
 export function Output() {
   const running = useSelector((state: RootState) => state.nodes.runningNode);
@@ -25,7 +26,14 @@ export function Output() {
               : null
               }
           </div>
-          <div className="p-3 bg-slate-800 text-white rounded font-display">
+          <div className={
+            classNames({
+              'p-3 bg-slate-800 text-white rounded font-display border-2 border-solid': true,
+              'border-gray-200': _node.data.state === 'idle',
+              'border-teal-500': _node.data.state === 'running',
+              'border-lime-600': _node.data.state === 'success',
+              'border-red-500': _node.data.state === 'error',
+            })}>
             <ul>
               {_node.data.output.map((_line: string, _i: number) => <li key={_i}>{_line}</li>)}  
             </ul>              
