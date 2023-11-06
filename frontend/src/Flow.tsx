@@ -14,9 +14,9 @@ import PythonNode from './nodeTypes/PythonNode';
 import FetchNode from './nodeTypes/FetchNode';
 
 import "reactflow/dist/style.css";
-import { useGetNodesQuery } from './services/nodes';
-import { RootState } from './store/store';
-import { useSelector } from 'react-redux';
+
+import {useDispatch, useSelector} from 'react-redux'
+import { AppDispatch, RootState } from './store/store';
 
 const nodeTypes = {
   python: PythonNode,
@@ -31,7 +31,8 @@ const initialEdges: Edge[] = [
   //{ id: "e1-3", source: "1", target: "3" }
 ];
 
-const BasicFlow = () => {        
+const BasicFlow = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const pyNodes = useSelector((state: RootState) => state.nodes.nodes);  
   const [nodes, setNodes, onNodesChange] = useNodesState([]);  
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -42,14 +43,19 @@ const BasicFlow = () => {
   );  
     
   useEffect(() => {
+    console.log("🚀 ~ useEffect triggered")
     setNodes(pyNodes)
-  }, [pyNodes]);   
+  }, [pyNodes.length]);
+
+  const onNodesChanges = (any: any) => {    
+    onNodesChange(any)
+  }
 
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChange}
+      onNodesChange={onNodesChanges}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       nodeTypes={nodeTypes}

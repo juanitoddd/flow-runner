@@ -33,7 +33,7 @@ const PythonNode = ({ id, data, isConnectable, targetPosition = Position.Top, so
             })
           }>
           <div className='text-xs px-3 py-2 border-b border-solid border-gray-200 font-mono font-semibold rounded-t-2xl'>          
-            <div className="flex items-center gap-1"><FaPython/>{id} {node.data?.label}</div>
+            <div className="flex items-center gap-1"><FaPython/>{node.data?.label}</div>
           </div>
           <div className='relative bg-white p-3 flex rounded-b-2xl'>
             <div>
