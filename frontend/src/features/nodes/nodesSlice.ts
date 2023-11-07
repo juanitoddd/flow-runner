@@ -8,13 +8,15 @@ export interface NodesState {
   runningNode: number | null;
   nodes: Node[];
   edges: Edge[];
+  code: string;
 }
 
 const initialState: NodesState = {
-  selectedNode: null, // Not yet used
+  selectedNode: null, // Selection
   runningNode: null, // name of the running node
   nodes: [],
   edges: [],
+  code: "",
 };
 
 export const findNode = (_name: string | null, _items: Node[]) =>
@@ -66,6 +68,15 @@ export const nodesSlice = createSlice({
         state.nodes = action.payload;
       }
     );
+    /*
+      .addMatcher(
+        nodesApi.endpoints.getNodeCode.matchFulfilled,
+        (state, action) => {
+          console.log("addMatcher", action.payload);
+          state.code = action.payload.output;
+        }
+      );
+      */
   },
 });
 

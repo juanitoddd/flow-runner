@@ -1,0 +1,17 @@
+.panelSelected {
+    background-color: white;
+    position: relative;
+}
+
+.panelSelected::after{
+    display: block;
+    content: "\00a0";
+    height: 1px;
+    width: 100%;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #fff;
+    position: absolute;            
+    bottom: 0px;
+    left: 0px;
+}

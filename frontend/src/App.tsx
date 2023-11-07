@@ -1,23 +1,23 @@
-import Flow from "./Flow";
-import Editor from "./Editor";
-import { Modal } from 'flowbite'
-import type { ModalOptions, ModalInterface } from 'flowbite'
+
 // Hooks
 import { useGetNodesQuery } from './services/nodes';
-import { useEffect, useState } from 'react';
-import { Nav } from './components/Nav';
-import { Output } from './components/Output';
-import { Aside } from './components/Aside';
+// UI
+import { Nav } from './components/ui/Nav';
+import { PanelRight } from './components/ui/PanelRight';
+import { PanelLeft } from './components/ui/PanelLeft';
+// Flow
+import Flow from './components/flow/Flow';
+// css
 import "./styles.css";
 import 'flowbite';
 
 export default function App() {
-  const { data, error, isLoading } = useGetNodesQuery()  
+  const { data, error, isLoading } = useGetNodesQuery()
   return (
     <div className="antialiased bg-gray-50 dark:bg-gray-900">
       <Nav /> 
-      <Aside />
-      <Output />
+      <PanelLeft />
+      <PanelRight />
       <main className="h-auto">
         <div className="h-screen w-screen">          
           <Flow />

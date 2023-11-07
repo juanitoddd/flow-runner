@@ -10,6 +10,7 @@ import {useDispatch, useSelector} from 'react-redux'
 import { AppDispatch, RootState } from '../store/store';
 import { runningNode, selectNode } from '../features/nodes/nodesSlice';
 import { classNames } from '../utils/css';
+import { useGetNodeCodeQuery } from "../services/nodes";
 
 const PythonNode = ({ id, data, isConnectable, targetPosition = Position.Top, sourcePosition = Position.Bottom }: NodeProps) => {  
   const node = useSelector((state: RootState) => state.nodes.nodes.find((_node: Node) => _node.data?.label === data.label));  
@@ -19,6 +20,7 @@ const PythonNode = ({ id, data, isConnectable, targetPosition = Position.Top, so
   const selectThisNode = (e: MouseEvent, node: Node) => {
     e.stopPropagation()    
     dispatch(selectNode(node.data.id))
+    // const { data, error, isLoading } = useGetNodeCodeQuery(node.data.label)
   }
 
   const runNode = (e: MouseEvent, node: Node) => {

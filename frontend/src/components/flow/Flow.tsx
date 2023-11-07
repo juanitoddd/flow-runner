@@ -9,14 +9,14 @@ import ReactFlow, {
   useEdgesState
 } from "reactflow";
 
-import CustomNode from "./nodeTypes/CustomNode";
-import PythonNode from './nodeTypes/PythonNode';
-import FetchNode from './nodeTypes/FetchNode';
+import CustomNode from "../../nodeTypes/CustomNode";
+import PythonNode from '../../nodeTypes/PythonNode';
+import FetchNode from '../../nodeTypes/FetchNode';
 
 import "reactflow/dist/style.css";
 
 import {useDispatch, useSelector} from 'react-redux'
-import { AppDispatch, RootState } from './store/store';
+import { AppDispatch, RootState } from '../../store/store';
 
 const nodeTypes = {
   python: PythonNode,
@@ -33,7 +33,7 @@ const initialEdges: Edge[] = [
 
 const BasicFlow = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const pyNodes = useSelector((state: RootState) => state.nodes.nodes);  
+  const pyNodes = useSelector((state: RootState) => state.nodes.nodes);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);  
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 

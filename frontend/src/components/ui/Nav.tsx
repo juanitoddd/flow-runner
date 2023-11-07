@@ -1,10 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../store/store';
+import { AppDispatch, RootState } from '../../store/store';
+import { classNames } from '../../utils/css';
+import { setRightPanel } from '../../features/ui/uiSlice';
+import styles from "./Nav.module.css";
 
-export function Nav() {
-  const running = useSelector((state: RootState) => state.nodes.runningNode);
-  const nodes = useSelector((state: RootState) => state.nodes.nodes);
+export function Nav() {  
+  const rightPanel = useSelector((state: RootState) => state.ui.rightPanel);  
   const dispatch = useDispatch<AppDispatch>();
+  const panelsRight = ['output','editor']
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed left-0 right-0 top-0 z-50">
         <div className="flex flex-wrap justify-between items-center">
@@ -36,7 +39,20 @@ export function Nav() {
               </svg>
             </button>
           </div>
-        </div>
+      </div>
+      <div className="absolute top-0 right-0 flex items-center" style={{ height: 53 }}>        
+        {panelsRight.map((_panel: string) =>
+          <button
+            key={_panel}
+            className={
+              classNames({
+                "border-l border-gray-200 h-full px-2": true,
+                [styles.panelSelected]: rightPanel === _panel,
+              })}
+            onClick={() => dispatch(setRightPanel(_panel))}
+          >{_panel}</button>
+        )}               
+      </div>
       </nav>           
   )
 }

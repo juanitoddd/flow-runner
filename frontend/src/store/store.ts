@@ -7,18 +7,18 @@ import {
 import type { PreloadedState } from "@reduxjs/toolkit";
 
 // Reducers
-import counterReducer from "../features/counter/counterSlice";
+import uiReducer from "../features/ui/uiSlice";
 import nodesReducer from "../features/nodes/nodesSlice";
 // import { pokemonApi } from "../services/pokemon";
 import { postsApi } from "../services/posts";
-import { nodesApi } from '../services/nodes';
+import { nodesApi } from "../services/nodes";
 
 const rootReducer = combineReducers({
   // [postsApi.reducerPath]: postsApi.reducer,
   // [pokemonApi.reducerPath]: pokemonApi.reducer,
   [nodesApi.reducerPath]: nodesApi.reducer,
-  counter: counterReducer,
   nodes: nodesReducer,
+  ui: uiReducer,
 });
 
 export const setupStore = (preloadedState?: PreloadedState<RootState>) => {
