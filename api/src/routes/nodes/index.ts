@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 
 //joining path of directory
+const dirScriptsPath = path.join(process.cwd(), "../scripts/");
 const dirCommonPath = path.join(process.cwd(), "../scripts/common");
 const dirCustomPath = path.join(process.cwd(), "../scripts/custom");
 
@@ -25,6 +26,7 @@ const getMainFn = async (file: string) => {
   const content = await fs.readFile(filepath, "utf8");
   const regex =
     /def\s*main\s*\(((\w+\s*,*\s*)*)\)\s*:(.|\t|\n)*return\s*(\w)/gm;
+  const regex2 = /def\s*main\s*\(((\w+\s*,*\s*:*\w*)*)\)\s*:(.|\t|\n)*return\s*(\w)/gm // Accepts types
   const parts: string[] = [];
   let inputs, output;
   let m;
@@ -92,6 +94,44 @@ export default async (fastify: FastifyInstance) => {
       };
     return { statusCode: 200, output: { inputs, output } };
   });
+  
+  fastify.get("/write", {}, async (req, res) => {
+    let code = '';
+    code += `from add import main as add_main\n`;    
+    code += `data = add_main(1, 2)\n`;
+    code += `print(data)\n`    
+    code += `f = open('./outputs/add', 'w')\nf.write(str(data))\nf.close()\n`;
+
+    const filepath = path.join(dirCommonPath, 'runner.py');
+    let response = await fs.writeFile(filepath, code);
+    console.log("response", response)
+    
+    const shell = new PythonShell('runner.py', options);
+    let i = 0;
+    res.code(200);
+    res.headers({
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
+    let error = false;
+    res.sse({ id: String(i), data: "__initializing__" });
+    shell.on("message", async function (message) {
+      console.log("message", message);
+      res.sse({ id: String(i++), data: message });
+    });
+    shell.on("stderr", async function (stderr) {
+      res.sse({ id: String(i++), data: stderr.toString() });
+      error = true;
+      // res.sseContext.source.end()
+    });
+    shell.on("close", async function () {
+      if (error) res.sse({ id: String(i++), data: "__error__" });
+      else res.sse({ id: String(i++), data: "__finished__" });
+      res.sseContext.source.end();
+      return;
+    });    
+  })
 
   // event-stream
   fastify.get("/exec/:file", {}, async (req, res) => {
@@ -107,38 +147,31 @@ export default async (fastify: FastifyInstance) => {
     });
     let error = false;
 
-    // Extract inputs/output fn from module
-    const regex =
-      /def\s*main\s*\(((\w+\s*,*\s*)+)\)\s*:(.|\t|\n)*return\s*(\w)/gm;
-    const filepath = path.join(dirCommonPath, file);
-    const content = await fs.readFile(filepath, "utf8");
-    const main = content.match(regex);
-    console.log("🚀 ~ main:", main);
-    if (!main)
-      return { statusCode: 200, output: `No main was found in file ${file}` };
-    const inputs = main[1].trim().split(",");
-    const output = main[3].trim();
+    const [inputs, output] = await getMainFn(file);
+    if (!inputs || !output)
+      return {
+        statusCode: 200,
+        output: `No proper main fn was found in file ${file}`,
+      };
 
-    const writeInputs = `f = open('./output', 'wb')`;
-    const args = [];
-
-    // Create runner
     const moduleName = file.replace(".py", "");
-    const writeImport = `from common.${moduleName} import main as ${moduleName}_main\n`;
-    // TODO: read main line and figure out the arguments of the function
+    let code = '';
+    code += `from common.${moduleName} import main as ${moduleName}_main\n`;
+    console.log("inputs", inputs)
+    // TODO: Read from previuos outputs
+    inputs.map((input: string, _i:number) => {
+      code += `${input} = ${_i + 1}\n`;
+    })
+    code += `data = ${moduleName}_main(${inputs.join(',')})\n`;
+    // code += `print(data)\n`
+    code += `f = open('./outputs/add', 'w')\nf.write(str(data))\nf.close()\n`;    
+  
+    // Create runner
+    const filepath = path.join(dirScriptsPath, 'runner.py');
+    let response = await fs.writeFile(filepath, code);
+    console.log("response", response)
 
-    /*
-    const inputs = []; // TODO: Tricky part, decode as input type
-    for (const input of inputs) {
-      args.push(input);
-    }
-    */
-    const writeExec = `data = ${moduleName}_main(${args.join(",")})\n`;
-    const writeOutput = `f = open('./output', 'wb')\nf.write(data)\nf.close()\n`;
-
-    const code = writeImport;
-
-    const shell = new PythonShell(file, options);
+    const shell = new PythonShell('runner.py', {...options, scriptPath: "../scripts"});
     // res.sse({ id: String(i), data: `Initializing ${file}`});
     res.sse({ id: String(i), data: "__initializing__" });
     shell.on("message", async function (message) {

@@ -4,7 +4,7 @@ import { Button, Checkbox, Label, TextInput } from 'flowbite-react';
 import { HiPlay } from 'react-icons/hi';
 import { FaPython, FaPlay } from 'react-icons/fa';
 import { SpinnerCircularSplit } from 'spinners-react';
-// import { runNode } from '../services/nodes';
+import styles from "./python.module.css"
 
 import {useDispatch, useSelector} from 'react-redux'
 import { AppDispatch, RootState } from '../store/store';
@@ -12,7 +12,7 @@ import { runningNode, selectNode } from '../features/nodes/nodesSlice';
 import { classNames } from '../utils/css';
 import { useGetNodeCodeQuery } from "../services/nodes";
 
-const PythonNode = ({ id, data, isConnectable, targetPosition = Position.Top, sourcePosition = Position.Bottom }: NodeProps) => {  
+const PythonNode = ({ id, data, isConnectable }: NodeProps) => {  
   const node = useSelector((state: RootState) => state.nodes.nodes.find((_node: Node) => _node.data?.label === data.label));  
   const selected = useSelector((state: RootState) => state.nodes.selectedNode)
   const dispatch = useDispatch<AppDispatch>();
@@ -29,12 +29,14 @@ const PythonNode = ({ id, data, isConnectable, targetPosition = Position.Top, so
   }
 
   if(node) {    
+    const ninputs = node.data.main.inputs ? node.data.main.inputs.length : 0
     return (    
       <>
         {node.data.main.inputs && node.data.main.inputs.map((_arg: string, _i:number) => 
           <Handle
             key={_arg}
             type="target"
+            className={styles.inputHandle}
             position={Position.Left}
             isConnectable={isConnectable}
             style={{top: 34 + 12 + (_i * 24) }}
@@ -64,7 +66,9 @@ const PythonNode = ({ id, data, isConnectable, targetPosition = Position.Top, so
           <div className='relative bg-white rounded-b-xl'>
             <div className='text-xs'>
               {node.data.main.inputs && node.data.main.inputs.map((_arg: string, _i: number) =>
-                <div className="border-b border-solid border-gray-200 pl-2 py-1">{_arg}</div>)}
+                <div key={_i} className="border-b border-solid border-gray-200 pl-2 py-1">{_arg}</div>
+              )}
+              <div className="border-b border-solid border-gray-200 pr-2 py-1 flex justify-end">{node.data.main.output}</div>
             </div>
             <div className="p-3">
               { node?.data.state === 'running' ?
@@ -79,11 +83,15 @@ const PythonNode = ({ id, data, isConnectable, targetPosition = Position.Top, so
             </div>
           </div>
         </div>
+        {node.data.main.output && 
         <Handle
           type="source"
-          position={sourcePosition}
+          position={Position.Right}
           isConnectable={isConnectable}
+          className={styles.outputHandle}
+          style={{top: 34 + 13 + (ninputs * 25) }}
         />
+        }
       </>
     );
   } else return <></>

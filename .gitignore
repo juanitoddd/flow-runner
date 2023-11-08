@@ -27,3 +27,8 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# APP Specific
+scripts/runner.py
+api/outputs
+__pycache__
