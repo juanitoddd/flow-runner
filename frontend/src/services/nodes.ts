@@ -19,12 +19,16 @@ export const nodesApi = createApi({
       providesTags: ["Nodes"],
       transformResponse: (res: any) =>
         res.output.map(
-          (_name: string, _i: number): Node => ({
+          (_node: any, _i: number): Node => ({
             id: `${_i}`,
             type: "python",
             data: {
               id: _i,
-              label: `${_name}`,
+              label: `${_node.name}`,
+              main: {
+                inputs: _node.inputs,
+                output: _node.output,
+              },
               state: "idle",
               output: [],
             },

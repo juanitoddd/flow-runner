@@ -4,7 +4,8 @@ b = ['one', 'two', 'three']
 print(a)
 time.sleep(3)
 print(b)
-def main(a, b):
+def main(a, b, c):
   print("Adding ...")
   time.sleep(3)
-  return a + b
+  c = a + b
+  return c

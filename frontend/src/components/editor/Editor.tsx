@@ -8,8 +8,7 @@ import Editor from '@monaco-editor/react';
 
 export const EditorPanel = () => {
   const node = useSelector((state: RootState) => state.nodes.nodes.find(n => n.data.id === state.nodes.selectedNode));
-  const code = useSelector((state: RootState) => state.nodes.code)
-  console.log("🚀 ~ node:", node)
+  const code = useSelector((state: RootState) => state.nodes.code)  
   if (node) {    
 
     const { data, error, isLoading } = useGetNodeCodeQuery(node.data.label)
@@ -32,7 +31,7 @@ export const EditorPanel = () => {
         </div>
         {data ?
           <>
-            <pre>{data.output}</pre>
+            {/* <pre>{data.output}</pre> */}
             <Editor
               height="85vh"
               width="100%"
