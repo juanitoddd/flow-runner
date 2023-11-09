@@ -89,9 +89,9 @@ export const runningNode = createAsyncThunk(
       thunkAPI.dispatch(nodesSlice.actions.setNodeState("running"));
 
       const eventSource = new EventSource(
-        `http://127.0.0.1:5000/nodes/run/${node.data.label}`
+        `http://127.0.0.1:5000/nodes/exec/${node.data.label}`
       );
-      // const eventSource = new EventSource(`http://127.0.0.1:5000/nodes/debug`);
+
       eventSource.onmessage = (e) => {
         // console.log("e", e);
         switch (e.data) {

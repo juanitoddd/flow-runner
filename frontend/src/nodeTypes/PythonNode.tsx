@@ -1,26 +1,45 @@
 import { memo } from "react";
 import { Handle, NodeProps, Position, Node } from "reactflow";
-import { Button, Checkbox, Label, TextInput } from 'flowbite-react';
-import { HiPlay } from 'react-icons/hi';
 import { FaPython, FaPlay } from 'react-icons/fa';
-import { SpinnerCircularSplit } from 'spinners-react';
+import { HiCode } from 'react-icons/hi';
+import { SpinnerCircularSplit, SpinnerRoundFilled } from 'spinners-react';
+
 import styles from "./python.module.css"
 
 import {useDispatch, useSelector} from 'react-redux'
 import { AppDispatch, RootState } from '../store/store';
 import { runningNode, selectNode } from '../features/nodes/nodesSlice';
 import { classNames } from '../utils/css';
-import { useGetNodeCodeQuery } from "../services/nodes";
 
-const PythonNode = ({ id, data, isConnectable }: NodeProps) => {  
+const ArgType = (props: any) => {
+  return (
+    <span
+      style={{fontSize: 9, paddingRight: 4, paddingLeft: 4}}
+      className={
+        classNames({
+          'flex item-center text-slate-400 rounded mr-2 p-0 font-robotic': true,
+          'bg-slate-100': props.type === 'str',
+          'bg-stone-100': props.type === 'float',
+          'bg-neutral-100': props.type === 'int',
+          'bg-zinc-100': props.type === 'list',
+          'bg-emerald-900': props.type === 'dict',
+          'bg-gray-100': props.type === 'bool',
+        })
+      }
+    >
+      {props.type}
+    </span>
+  )
+}
+
+const PythonNode = ({ id, data, isConnectable }: NodeProps) => {
   const node = useSelector((state: RootState) => state.nodes.nodes.find((_node: Node) => _node.data?.label === data.label));  
   const selected = useSelector((state: RootState) => state.nodes.selectedNode)
   const dispatch = useDispatch<AppDispatch>();
 
   const selectThisNode = (e: MouseEvent, node: Node) => {
     e.stopPropagation()    
-    dispatch(selectNode(node.data.id))
-    // const { data, error, isLoading } = useGetNodeCodeQuery(node.data.label)
+    dispatch(selectNode(node.data.id))    
   }
 
   const runNode = (e: MouseEvent, node: Node) => {
@@ -32,9 +51,9 @@ const PythonNode = ({ id, data, isConnectable }: NodeProps) => {
     const ninputs = node.data.main.inputs ? node.data.main.inputs.length : 0
     return (    
       <>
-        {node.data.main.inputs && node.data.main.inputs.map((_arg: string, _i:number) => 
+        {node.data.main.inputs && node.data.main.inputs.map((_arg: string[], _i:number) => 
           <Handle
-            key={_arg}
+            key={_i}
             type="target"
             className={styles.inputHandle}
             position={Position.Left}
@@ -61,14 +80,39 @@ const PythonNode = ({ id, data, isConnectable }: NodeProps) => {
               'border-red-500': node.data.state === 'error',
             })}
           >          
-            <div className="flex items-center gap-1"><FaPython/>{node.data?.label}</div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-1">
+                <HiCode color='#999'/>
+                <span className={styles.nodeName}>{node.data?.label.replace('.py', '')}</span>
+              </div>
+              {node.data.state === 'running' ? <SpinnerRoundFilled  size={12} thickness={100} speed={100} color="rgb(20 184 166)" /> : 
+                <div className={
+                  classNames({
+                    [styles.nodeStatus]: true,
+                    'rounded-full': true,
+                    'bg-gray-500': node.data.state === 'idle',
+                    'bg-teal-500': node.data.state === 'running',
+                    'bg-lime-600': node.data.state === 'success',
+                    'bg-red-500': node.data.state === 'error',
+                  })}                
+                ></div>
+              }
+            </div>
           </div>
           <div className='relative bg-white rounded-b-xl'>
             <div className='text-xs'>
-              {node.data.main.inputs && node.data.main.inputs.map((_arg: string, _i: number) =>
-                <div key={_i} className="border-b border-solid border-gray-200 pl-2 py-1">{_arg}</div>
+              {node.data.main.inputs && node.data.main.inputs.map((_arg: string[], _i: number) =>
+                <div key={_i} className="flex items-center border-b border-solid border-gray-100 pl-2 py-1">
+                  <ArgType type={_arg[1]}/>
+                  <span>{_arg[0]}</span>
+                </div>
               )}
-              <div className="border-b border-solid border-gray-200 pr-2 py-1 flex justify-end">{node.data.main.output}</div>
+              {node.data.main.output && 
+                <div className="flex items-center border-b border-solid border-gray-200 pr-2 py-1 flex justify-end">
+                  <ArgType type={node.data.main.output[1]}/>
+                  <span>{node.data.main.output[0]}</span>
+                </div>
+              }
             </div>
             <div className="p-3">
               { node?.data.state === 'running' ?

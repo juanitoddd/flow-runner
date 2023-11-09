@@ -1,7 +1,7 @@
 .inputHandle {        
     width: 6px;
     height: 6px;
-    background: none !important;
+    background: white !important;
     border: 1px solid #75E116 !important;
     z-index: 1;
 }
@@ -9,7 +9,15 @@
 .outputHandle {        
     width: 6px;
     height: 6px;
-    background: none !important;
+    background: white !important;
     border: 1px solid #E116E1 !important;
     z-index: 1;
+}
+
+.nodeName {
+    text-transform: capitalize;
+}
+.nodeStatus {
+    width: 8px;
+    height: 8px;
 }

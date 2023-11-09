@@ -9,6 +9,7 @@ export default {
     extend: {},
     fontFamily: {
       'display': ['Roboto Mono', 'Oswald'],
+      'robotic': ['Bebas Neue', 'sans-serif'],
     }
   },
   plugins: [require('flowbite/plugin')],

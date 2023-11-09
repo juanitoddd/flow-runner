@@ -1,7 +1,9 @@
 import time
 a = {'normal': 1, 'deep': {'some': 2}}
 b = ['one', 'two', 'three']
-def main(a, b):
+
+# @info Add two numbers and returns the result
+def main(a:int, b:int) -> int:
   print("Adding ...")
   print(a)
   print(b)

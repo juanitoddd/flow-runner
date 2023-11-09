@@ -24,17 +24,51 @@ const getMainFn = async (file: string) => {
   // Extract inputs/output fn from module
   const filepath = path.join(dirCommonPath, file);
   const content = await fs.readFile(filepath, "utf8");
-  const regex =
-    /def\s*main\s*\(((\w+\s*,*\s*)*)\)\s*:(.|\t|\n)*return\s*(\w)/gm;
-  const regex2 = /def\s*main\s*\(((\w+\s*,*\s*:*\w*)*)\)\s*:(.|\t|\n)*return\s*(\w)/gm // Accepts types
-  const parts: string[] = [];
-  let inputs, output;
+  
+  /*
+  // No types regex
+    match[1]: inputs
+    match[4]: output
+  */
+ const regex = /def\s*main\s*\(((\w+\s*,*\s*)*)\)\s*:(.|\t|\n)*return\s*(\w)/gm;
+
+  /*
+  Inputs types regex
+    match[1]: inputs & types
+    match[4]: output
+  */
+  const regex2 = /def\s*main\s*\(\s*((\w+\s*:\s*\w+\s*,*\s*)*)\)\s*:(.|\t|\n)*return\s*(\w)/gm // Accepts input types
+  
+  /*
+  Inputs/Output types regex
+    match[1]: inputs & types
+    match[3]: output type
+    match[5]: output
+  */
+  const regex3 = /def\s*main\s*\(\s*((\w+\s*:\s*\w+\s*,*\s*)*)\)\s*->\s*(\w+)\s*:(.|\t|\n)*return\s*(\w)/gm // Accept input/outputs types
+  
+  /*
+  Fn Info
+    match[1]: Info
+  */
+  const info = /@info\s*((\w*\s*)+)(?=\n)/gm
   let m;
-  while ((m = regex.exec(content)) !== null) {
+  let infoStr = ''
+  while ((m = info.exec(content)) !== null) {
     // This is necessary to avoid infinite loops with zero-width matches
-    if (m.index === regex.lastIndex) {
-      regex.lastIndex++;
-    }
+    if (m.index === regex3.lastIndex) regex3.lastIndex++;    
+    // The result can be accessed through the `m`-variable.
+    m.forEach((match, groupIndex) => {     
+      // console.log("match", match)  
+      if (groupIndex === 1) infoStr = match
+    });    
+  }
+
+  const parts: string[] = [];
+  let inputs, outputName, outputType;  
+  while ((m = regex3.exec(content)) !== null) {
+    // This is necessary to avoid infinite loops with zero-width matches
+    if (m.index === regex3.lastIndex) regex3.lastIndex++;    
     // The result can be accessed through the `m`-variable.
     m.forEach((match, groupIndex) => {
       // console.log(`Found match, group ${groupIndex}: ${match}`);
@@ -43,26 +77,31 @@ const getMainFn = async (file: string) => {
         inputs = match
           .split(",")
           .map((s) => s.trim())
-          .filter((s) => s !== "");
-      if (groupIndex === 4) output = match;
-    });
+          .filter((s) => s !== "")
+          .map((s) => s.split(':'))
+      if (groupIndex === 3) outputType = match;
+      if (groupIndex === 5) outputName = match;      
+    });    
   }
+  let output = [outputName, outputType]
   if (parts.length === 0) return [];
-  return [inputs, output];
+  return [inputs, output, infoStr];
 };
 
 export default async (fastify: FastifyInstance) => {
+  // Get nodes in common
   fastify.get("/", {}, async function (req, res) {
     const common = (await fs.readdir(dirCommonPath)).filter((f: string) =>
       f.includes(".py")
     );
     const nodes = await Promise.all(
       common.map(async (_file: string) => {
-        const [inputs, output] = await getMainFn(_file);
+        const [inputs, output, info] = await getMainFn(_file);
         return {
           name: _file,
           inputs,
           output,
+          info
         };
       })
     );
@@ -73,6 +112,7 @@ export default async (fastify: FastifyInstance) => {
     return { statusCode: 200, output: nodes };
   });
 
+  // Get code of node
   fastify.get("/code/:file", {}, async function (req, res) {
     const { file } = req.params as any;
     if (!file)
@@ -82,6 +122,7 @@ export default async (fastify: FastifyInstance) => {
     return { statusCode: 200, output: content, id: file };
   });
 
+  // Get inputs/outputs/info of node
   fastify.get("/read/:file", {}, async (req, res) => {
     const { file } = req.params as any;
     if (!file)
@@ -94,7 +135,111 @@ export default async (fastify: FastifyInstance) => {
       };
     return { statusCode: 200, output: { inputs, output } };
   });
+
+  // event-stream
+  fastify.get("/exec/:file", {}, async (req, res) => {
+    const { file } = req.params as any;
+    if (!file)
+      return { statusCode: 200, output: `No file was found with name ${file}` };
+    let i = 0;    
+    let error = false;
+
+    const [inputs, output] = await getMainFn(file);
+    console.log("inputs", inputs)
+    console.log("output", output)    
+
+    if (!inputs || !output)
+      return {
+        statusCode: 200,
+        output: `No proper main fn was found in file ${file}`,
+      };
+    
+    res.code(200);
+    res.headers({
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });    
+
+    const moduleName = file.replace(".py", "");
+    let code = '';
+    code += `from common.${moduleName} import main as ${moduleName}_main\n`;    
+    // TODO: Read from previuos outputs
+    const inputVars = []
+    inputs.map((input: string[], _i:number) => {
+      inputVars.push(input[0])
+      code += `${input[0]} = ${_i + 1}\n`;
+    })
+    code += `data = ${moduleName}_main(${inputVars.join(',')})\n`;
+    // code += `print(data)\n`
+    code += `f = open('./artifacts/${moduleName}', 'w')\nf.write(str(data))\nf.close()\n`;    
   
+    // Create runner
+    const filepath = path.join(dirScriptsPath, 'runner.py');
+    let response = await fs.writeFile(filepath, code);
+    console.log("response", response)
+
+    const shell = new PythonShell('runner.py', {...options, scriptPath: "../scripts"});
+    // res.sse({ id: String(i), data: `Initializing ${file}`});
+    res.sse({ id: String(i), data: "__initializing__" });
+    shell.on("message", async function (message) {
+      console.log("message", message);
+      res.sse({ id: String(i++), data: message });
+    });
+    shell.on("stderr", async function (stderr) {
+      res.sse({ id: String(i++), data: stderr.toString() });
+      error = true;
+      // res.sseContext.source.end()
+    });
+    shell.on("close", async function () {
+      if (error) res.sse({ id: String(i++), data: "__error__" });
+      else res.sse({ id: String(i++), data: "__finished__" });
+      res.sseContext.source.end();
+      return;
+    });
+  });
+
+  // Run single node, no output caching
+  fastify.get("/run/:file", {}, async (req, res) => {
+    const { file } = req.params as any;
+    if (!file)
+      return { statusCode: 200, output: `No file was found with name ${file}` };
+    let i = 0;
+    res.code(200);
+    res.headers({
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
+    let error = false;
+    const shell = new PythonShell(file, options);
+    // res.sse({ id: String(i), data: `Initializing ${file}`});
+    res.sse({ id: String(i), data: "__initializing__" });
+    shell.on("message", async function (message) {
+      console.log("message", message);
+      res.sse({ id: String(i++), data: message });
+    });
+    shell.on("stderr", async function (stderr) {
+      res.sse({ id: String(i++), data: stderr.toString() });
+      error = true;
+      // res.sseContext.source.end()
+    });
+    shell.on("close", async function () {
+      if (error) res.sse({ id: String(i++), data: "__error__" });
+      else res.sse({ id: String(i++), data: "__finished__" });
+      res.sseContext.source.end();
+      return;
+    });
+  });
+
+  // TODO: run complete pipeline event-stream
+  fastify.get("/pipeline", {}, async (req, res) => {
+    return { statusCode: 200, output: `todo` };
+  });
+
+  // ------- DEBUG fns ---------- //
+  
+  // Debug write
   fastify.get("/write", {}, async (req, res) => {
     let code = '';
     code += `from add import main as add_main\n`;    
@@ -131,131 +276,7 @@ export default async (fastify: FastifyInstance) => {
       res.sseContext.source.end();
       return;
     });    
-  })
-
-  // event-stream
-  fastify.get("/exec/:file", {}, async (req, res) => {
-    const { file } = req.params as any;
-    if (!file)
-      return { statusCode: 200, output: `No file was found with name ${file}` };
-    let i = 0;
-    res.code(200);
-    res.headers({
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    });
-    let error = false;
-
-    const [inputs, output] = await getMainFn(file);
-    if (!inputs || !output)
-      return {
-        statusCode: 200,
-        output: `No proper main fn was found in file ${file}`,
-      };
-
-    const moduleName = file.replace(".py", "");
-    let code = '';
-    code += `from common.${moduleName} import main as ${moduleName}_main\n`;
-    console.log("inputs", inputs)
-    // TODO: Read from previuos outputs
-    inputs.map((input: string, _i:number) => {
-      code += `${input} = ${_i + 1}\n`;
-    })
-    code += `data = ${moduleName}_main(${inputs.join(',')})\n`;
-    // code += `print(data)\n`
-    code += `f = open('./outputs/add', 'w')\nf.write(str(data))\nf.close()\n`;    
-  
-    // Create runner
-    const filepath = path.join(dirScriptsPath, 'runner.py');
-    let response = await fs.writeFile(filepath, code);
-    console.log("response", response)
-
-    const shell = new PythonShell('runner.py', {...options, scriptPath: "../scripts"});
-    // res.sse({ id: String(i), data: `Initializing ${file}`});
-    res.sse({ id: String(i), data: "__initializing__" });
-    shell.on("message", async function (message) {
-      console.log("message", message);
-      res.sse({ id: String(i++), data: message });
-    });
-    shell.on("stderr", async function (stderr) {
-      res.sse({ id: String(i++), data: stderr.toString() });
-      error = true;
-      // res.sseContext.source.end()
-    });
-    shell.on("close", async function () {
-      if (error) res.sse({ id: String(i++), data: "__error__" });
-      else res.sse({ id: String(i++), data: "__finished__" });
-      res.sseContext.source.end();
-      return;
-    });
-  });
-
-  // event-stream
-  fastify.get("/run/:file", {}, async (req, res) => {
-    const { file } = req.params as any;
-    if (!file)
-      return { statusCode: 200, output: `No file was found with name ${file}` };
-    let i = 0;
-    res.code(200);
-    res.headers({
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    });
-    let error = false;
-    const shell = new PythonShell(file, options);
-    // res.sse({ id: String(i), data: `Initializing ${file}`});
-    res.sse({ id: String(i), data: "__initializing__" });
-    shell.on("message", async function (message) {
-      console.log("message", message);
-      res.sse({ id: String(i++), data: message });
-    });
-    shell.on("stderr", async function (stderr) {
-      res.sse({ id: String(i++), data: stderr.toString() });
-      error = true;
-      // res.sseContext.source.end()
-    });
-    shell.on("close", async function () {
-      if (error) res.sse({ id: String(i++), data: "__error__" });
-      else res.sse({ id: String(i++), data: "__finished__" });
-      res.sseContext.source.end();
-      return;
-    });
-  });
-
-  // TODO: run complete pipeline event-stream
-  fastify.get("/pipeline", {}, async (req, res) => {
-    const { file } = req.params as any;
-    if (!file)
-      return { statusCode: 200, output: `No file was found with name ${file}` };
-    let i = 0;
-    res.code(200);
-    res.headers({
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    });
-    let error = false;
-    const shell = new PythonShell(file, options);
-    // res.sse({ id: String(i), data: `Initializing ${file}`});
-    res.sse({ id: String(i), data: "__initializing__" });
-    shell.on("message", async function (message) {
-      console.log("message", message);
-      res.sse({ id: String(i++), data: message });
-    });
-    shell.on("stderr", async function (stderr) {
-      res.sse({ id: String(i++), data: stderr.toString() });
-      error = true;
-      // res.sseContext.source.end()
-    });
-    shell.on("close", async function () {
-      if (error) res.sse({ id: String(i++), data: "__error__" });
-      else res.sse({ id: String(i++), data: "__finished__" });
-      res.sseContext.source.end();
-      return;
-    });
-  });
+  })  
 
   // event-stream
   fastify.get("/debug", async function (req, res) {
