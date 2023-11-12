@@ -10,7 +10,7 @@ import styles from "./python.module.css"
 import {useDispatch, useSelector} from 'react-redux'
 import { AppDispatch, RootState } from '../store/store';
 import { runningNode, selectNode } from '../features/nodes/nodesSlice';
-import {setInitial} from '../features/flow/flowSlice'
+import { setInitial, removeNode } from '../features/flow/flowSlice'
 import { classNames } from '../utils/css';
 
 const ArgType = (props: any) => {
@@ -51,8 +51,13 @@ const PythonNode = ({ id, data, isConnectable }: NodeProps) => {
   }
 
   const runNode = (e: MouseEvent, node: Node) => {
-    e.stopPropagation()    
+    e.stopPropagation()
     dispatch(runningNode(node))
+  }
+
+  const removeThisNode = (e: MouseEvent, node: Node) => {
+    e.stopPropagation()    
+    dispatch(removeNode(node.id))
   }
 
   if(node) {    
@@ -75,9 +80,9 @@ const PythonNode = ({ id, data, isConnectable }: NodeProps) => {
               [styles.node] : true,
               'flex flex-col border border-solid h-full rounded-xl bg-white/70 shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]': true,              
               'border-gray-200': node.data.state === 'idle',
-              'border-teal-500': node.data.state === 'running',
-              'border-lime-600': node.data.state === 'success',
-              'border-red-500': node.data.state === 'error',
+              //'border-teal-500': node.data.state === 'running',
+              //'border-lime-600': node.data.state === 'success',
+              //'border-red-500': node.data.state === 'error',
             })
           }>
             <div className={styles.hover}>
@@ -93,9 +98,9 @@ const PythonNode = ({ id, data, isConnectable }: NodeProps) => {
               'relative z-10 bg-white text-xs px-3 py-2 border-b border-solid border-gray-200 font-mono font-semibold rounded-t-xl': true,
               'bg-slate-100': node.data.id === selected,            
               'border-gray-200': node.data.state === 'idle',
-              'border-teal-500': node.data.state === 'running',
-              'border-lime-600': node.data.state === 'success',
-              'border-red-500': node.data.state === 'error',
+              //'border-teal-500': node.data.state === 'running',
+              //'border-lime-600': node.data.state === 'success',
+              //'border-red-500': node.data.state === 'error',
             })}
           >          
             <div className="flex justify-between items-center">
@@ -114,7 +119,7 @@ const PythonNode = ({ id, data, isConnectable }: NodeProps) => {
                 }
                 <span className={styles.nodeName}>{node.data?.label.replace('.py', '')}</span>
               </div>
-              <button><MdClose stroke='#bbb' color='#bbb'/></button>              
+              <button className='rounded hover:bg-gray-100' onClick={(e) => removeThisNode(e, node)}><MdClose stroke='#bbb'/></button>              
             </div>
           </div>
           <div className='relative bg-white rounded-b-xl'>
