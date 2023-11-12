@@ -9,15 +9,14 @@ export interface Config {
   }
 }
 
-const env = 'test'
+const env = 'runner'
 // eslint-disable-next-line
 let base: Config = {
   env,
   mongo: {
     connection:
-      process.env.TEST_MONGO_URL ||
-      'mongodb://dev:dev@localhost:27017/pominidb?authSource=admin',
-    dbName: 'pominidb'
+      process.env.TEST_MONGO_URL || 'mongodb://localhost:27017/runner',
+    dbName: 'runner'
   }
 }
 

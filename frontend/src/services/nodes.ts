@@ -20,7 +20,7 @@ export const nodesApi = createApi({
       transformResponse: (res: any) =>
         res.output.map(
           (_node: any, _i: number): Node => ({
-            id: `${_i}`,
+            id: `${_node.name}`,
             type: "python",
             data: {
               id: _i,
@@ -29,12 +29,13 @@ export const nodesApi = createApi({
                 inputs: _node.inputs,
                 output: _node.output,
               },
+              info: _node.info,
               state: "idle",
               output: [],
             },
             position: { x: 250, y: _i * 120 },
             style: {
-              minWidth: 150,
+              width: 150,
             },
           })
         ),

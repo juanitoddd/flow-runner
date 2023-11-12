@@ -3,7 +3,7 @@
     height: 6px;
     background: white !important;
     border: 1px solid #75E116 !important;
-    z-index: 1;
+    z-index: 20;
 }
 
 .outputHandle {        
@@ -11,7 +11,22 @@
     height: 6px;
     background: white !important;
     border: 1px solid #E116E1 !important;
+    z-index: 20;
+}
+
+.node .hover {    
+    position: absolute;
+    opacity: 1; 
+    top: 1px;
+    left: 10px;
     z-index: 1;
+}
+
+.node:hover .hover {    
+    opacity: 1; 
+    top: -20px;    
+    left: 10px;
+    transition: all 0.2s;
 }
 
 .nodeName {

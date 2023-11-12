@@ -13,7 +13,7 @@ export function PanelRight() {
   ]
   return (
     <aside
-      className="fixed top-0 right-0 z-40 w-2/6 h-screen pt-14 transition-transform -translate-x-full bg-white border-l border-gray-200 md:translate-x-0 dark:bg-gray-800 dark:border-gray-700"      
+      className="h-screen pt-1 transition-transform -translate-x-full bg-white border-l border-gray-200 md:translate-x-0 dark:bg-gray-800 dark:border-gray-700"      
       aria-label="Sidenav"
       id="output"
     >
